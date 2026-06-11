@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { color-scheme: dark; }
+  body { margin: 0; min-width: 320px; background: #09090b; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+  button, input, textarea { font: inherit; }
+}
+
+@layer components {
+  .video-grid { @apply grid gap-x-5 gap-y-8 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4; }
+  .panel { @apply rounded-2xl border border-white/10 bg-white/[0.04]; }
+}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { border-radius: 999px; background: #3f3f46; }
