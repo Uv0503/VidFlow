@@ -11,6 +11,7 @@ import {
 } from "../services/video";
 import { useAuth } from "../services/auth";
 import { Button, EmptyState, ErrorMessage, Input, Loader } from "../components/ui";
+import { addVideoToPlaylist, getMyPlaylists } from "../services/social";
 
 const sameId = (a, b) => a?.toString() === b?.toString();
 
@@ -26,6 +27,10 @@ export default function Watch() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [showPlaylists, setShowPlaylists] = useState(false);
+  const [playlists, setPlaylists] = useState([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(false);
+  const [playlistMessage, setPlaylistMessage] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,6 +74,38 @@ export default function Watch() {
       setVideo((current) => ({ ...current, ...state }));
     } catch (err) {
       setError(err.userMessage);
+    }
+  };
+
+  const openPlaylists = async () => {
+    if (!requireAuth()) return;
+    const nextOpen = !showPlaylists;
+    setShowPlaylists(nextOpen);
+    setPlaylistMessage("");
+    if (!nextOpen || playlists.length) return;
+    setPlaylistsLoading(true);
+    try {
+      setPlaylists(await getMyPlaylists());
+    } catch (err) {
+      setError(err.userMessage);
+    } finally {
+      setPlaylistsLoading(false);
+    }
+  };
+
+  const saveToPlaylist = async (playlistId) => {
+    setBusy(true);
+    setPlaylistMessage("");
+    try {
+      const updated = await addVideoToPlaylist(playlistId, videoId);
+      setPlaylists((items) => items.map((item) =>
+        item._id === updated._id ? updated : item
+      ));
+      setPlaylistMessage(`Saved to ${updated.name}`);
+    } catch (err) {
+      setPlaylistMessage(err.userMessage);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -146,9 +183,44 @@ export default function Watch() {
           <Button variant={video.isLiked ? "primary" : "secondary"} onClick={like}>
             {video.isLiked ? "Liked" : "Like"} · {video.likesCount || 0}
           </Button>
+          <Button variant="secondary" onClick={openPlaylists}>Save</Button>
           <Button variant="secondary" onClick={() => navigator.clipboard?.writeText(window.location.href)}>Share</Button>
         </div>
       </div>
+      {showPlaylists && (
+        <div className="panel mt-4 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold">Save to playlist</h2>
+            <Link to="/playlists" className="text-sm font-semibold text-violet-300 hover:text-violet-200">
+              Manage playlists
+            </Link>
+          </div>
+          {playlistsLoading ? (
+            <p className="mt-3 text-sm text-zinc-500">Loading playlists...</p>
+          ) : playlists.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {playlists.map((playlist) => {
+                const alreadySaved = playlist.videos?.some((item) => item._id === videoId);
+                return (
+                  <Button
+                    key={playlist._id}
+                    variant={alreadySaved ? "secondary" : "ghost"}
+                    disabled={busy || alreadySaved}
+                    onClick={() => saveToPlaylist(playlist._id)}
+                  >
+                    {alreadySaved ? `Saved in ${playlist.name}` : playlist.name}
+                  </Button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="mt-3 text-sm text-zinc-500">
+              You have no playlists. Create one from the Playlists page.
+            </p>
+          )}
+          {playlistMessage && <p className="mt-3 text-sm text-violet-300">{playlistMessage}</p>}
+        </div>
+      )}
       <div className="panel mt-5 p-5">
         <p className="text-sm font-semibold text-zinc-300">{video.views?.toLocaleString()} views</p>
         <p className="mt-3 whitespace-pre-wrap text-zinc-400">{video.description}</p>

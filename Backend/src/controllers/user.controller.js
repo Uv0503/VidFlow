@@ -68,13 +68,14 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 export const loginUser = asyncHandler(async (req, res) => {
-  const email = req.body.email?.trim().toLowerCase();
-  const username = req.body.username?.trim().toLowerCase();
-  if ((!email && !username) || !req.body.password) {
+  const { email: rawEmail, username: rawUsername, password } = req.body || {};
+  const email = rawEmail?.trim().toLowerCase();
+  const username = rawUsername?.trim().toLowerCase();
+  if ((!email && !username) || !password) {
     throw new ApiError(400, "Username or email and password are required");
   }
   const user = await User.findOne(email ? { email } : { username });
-  if (!user || !(await user.isPasswordCorrect(req.body.password))) {
+  if (!user || !(await user.isPasswordCorrect(password))) {
     throw new ApiError(401, "Invalid credentials");
   }
 

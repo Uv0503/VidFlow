@@ -58,6 +58,18 @@ export const getUserPlaylists = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, playlists, "Playlists fetched"));
 });
 
+export const getMyPlaylists = asyncHandler(async (req, res) => {
+  const playlists = await Playlist.find({ owner: req.user._id })
+    .populate("owner", "username fullName avatar")
+    .populate({
+      path: "videos",
+      match: { isPublished: true },
+      populate: { path: "owner", select: "username fullName avatar" },
+    })
+    .sort({ updatedAt: -1 });
+  res.status(200).json(new ApiResponse(200, playlists, "Your playlists fetched"));
+});
+
 export const getPlaylistById = asyncHandler(async (req, res) => {
   assertObjectId(req.params.playlistId, "playlist id");
   const playlist = await populatedPlaylist(req.params.playlistId);

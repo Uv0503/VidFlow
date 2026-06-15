@@ -48,7 +48,10 @@ export default function Channel() {
           <img src={channel.avatar} alt="" className="h-28 w-28 rounded-full border-4 border-[#09090b] object-cover sm:h-36 sm:w-36" />
           <div className="flex-1 sm:pb-2">
             <h1 className="text-3xl font-bold">{channel.fullName}</h1>
-            <p className="mt-1 text-zinc-500">@{channel.username} · {channel.subscribersCount || 0} subscribers</p>
+            <p className="mt-1 text-zinc-500">
+              @{channel.username} · {channel.subscribersCount || 0} subscribers ·{" "}
+              {channel.channelsSubscribedToCount || 0} subscribed
+            </p>
           </div>
           {!ownChannel && <Button onClick={subscribe} variant={channel.isSubscribed ? "secondary" : "primary"} className="sm:mb-2">{channel.isSubscribed ? "Subscribed" : "Subscribe"}</Button>}
         </div>

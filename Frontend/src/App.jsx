@@ -8,6 +8,8 @@ import Signup from "./pages/Signup";
 import Liked from "./pages/Liked";
 import Creator from "./pages/Creator";
 import Subscriptions from "./pages/Subscriptions";
+import Tweets from "./pages/Tweets";
+import Playlists from "./pages/Playlists";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -30,6 +32,8 @@ export default function App() {
             <Route path="/liked" element={<ProtectedRoute><Liked /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Creator /></ProtectedRoute>} />
             <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
+            <Route path="/tweets" element={<Tweets />} />
+            <Route path="/playlists" element={<ProtectedRoute><Playlists /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>

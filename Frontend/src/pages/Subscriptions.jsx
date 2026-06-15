@@ -23,8 +23,17 @@ export default function Subscriptions() {
   return (
     <section>
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-400">Your library</p>
-      <h1 className="mt-1 text-3xl font-bold">Subscriptions</h1>
-      <p className="mt-2 text-zinc-500">Latest videos from channels you follow.</p>
+      <div className="mt-1 flex flex-wrap items-end gap-3">
+        <h1 className="text-3xl font-bold">Subscriptions</h1>
+        {!loading && (
+          <span className="mb-1 rounded-full bg-violet-500/10 px-3 py-1 text-sm font-semibold text-violet-300">
+            {channels.length} subscribed
+          </span>
+        )}
+      </div>
+      <p className="mt-2 text-zinc-500">
+        Latest videos from {channels.length || "the"} channels you follow.
+      </p>
       <div className="mt-5"><ErrorMessage message={error} /></div>
 
       {loading ? <div className="mt-7"><SkeletonGrid /></div> : channels.length ? (
