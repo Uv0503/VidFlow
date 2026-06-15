@@ -29,3 +29,5 @@ export const deleteVideo = async (videoId) =>
   unwrap(await api.delete(`/videos/${videoId}`));
 export const getSubscriptionFeed = async () =>
   unwrap(await api.get("/subscriptions/me/feed"));
+export const getWatchHistory = async () =>
+  unwrap(await api.get("/users/watch-history"));

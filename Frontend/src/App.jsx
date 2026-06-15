@@ -10,6 +10,7 @@ import Creator from "./pages/Creator";
 import Subscriptions from "./pages/Subscriptions";
 import Tweets from "./pages/Tweets";
 import Playlists from "./pages/Playlists";
+import History from "./pages/History";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/subscriptions" element={<ProtectedRoute><Subscriptions /></ProtectedRoute>} />
             <Route path="/tweets" element={<Tweets />} />
             <Route path="/playlists" element={<ProtectedRoute><Playlists /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
           </Routes>
         </main>
       </div>

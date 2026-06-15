@@ -5,6 +5,7 @@ const links = [
   { to: "/subscriptions", label: "Subscriptions", icon: "S" },
   { to: "/tweets", label: "Posts", icon: "T" },
   { to: "/playlists", label: "Playlists", icon: "P" },
+  { to: "/history", label: "History", icon: "H" },
   { to: "/liked", label: "Liked", icon: "L" },
   { to: "/profile", label: "Profile", icon: "C" },
   { to: "/upload", label: "Upload", icon: "U" },
