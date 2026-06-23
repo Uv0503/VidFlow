@@ -1,4 +1,4 @@
-# VideoTube Backend
+# VidFlow Backend
 
 Express and MongoDB API for the VideoTube application.
 
