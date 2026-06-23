@@ -2,6 +2,15 @@
 
 A full-stack video sharing platform built with React, Node.js, Express, MongoDB, JWT authentication, Cloudinary uploads, likes, comments, playlists, subscriptions, and a modern responsive UI.
 
+## Highlights
+
+- Search published videos and filter them by category or tag.
+- Browse an engagement-ranked Trending page and in-context video recommendations.
+- Create videos with validated categories and up to 10 normalized tags.
+- Use creator uploads, liked videos, watch history, subscriptions, playlists, and comments.
+- Protect authentication, upload, and interaction endpoints with targeted rate limits.
+- Use responsive React views for discovery, upload, playback, and creator management.
+
 ## Local setup
 
 ### Backend
@@ -43,7 +52,9 @@ Frontend:
 ## API summary
 
 - Users: `/api/v1/users/register`, `/login`, `/logout`, `/refresh-token`, `/current-user`, `/c/:username`
-- Videos: `GET /api/v1/videos`, `GET /videos/:videoId`, `GET /videos/channel/:username`, `POST /videos/publish-video`
+- Videos: `GET /api/v1/videos`, `GET /videos/:videoId`, `GET /videos/channel/:username`, `GET /videos/me/uploads`
+- Discovery: `GET /videos/trending`, `GET /videos/:videoId/recommendations`
+- Video publishing: `POST /videos/publish-video`
 - Video ownership: `PATCH/DELETE /api/v1/videos/:videoId`, `PATCH /videos/:videoId/publish`
 - Comments: `GET/POST /api/v1/comments/:videoId`, `PATCH/DELETE /comments/:commentId`
 - Likes: `POST /api/v1/likes/videos/:videoId`, `GET /likes/videos`

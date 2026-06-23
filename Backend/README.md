@@ -86,7 +86,9 @@ All routes begin with:
 ### Videos
 
 - `GET /videos`
+- `GET /videos/trending`
 - `GET /videos/:videoId`
+- `GET /videos/:videoId/recommendations`
 - `GET /videos/channel/:username`
 - `GET /videos/me/uploads`
 - `POST /videos/publish-video`
@@ -95,6 +97,17 @@ All routes begin with:
 - `DELETE /videos/:videoId`
 
 Video categories are validated as one of: General, Education, Technology, Gaming, Music, Entertainment, Sports, News, Howto & Style, or Travel.
+
+## Video discovery and metadata
+
+- `GET /videos` accepts `page`, `limit`, `sortBy`, `sortType`, `query`, `category`, `tag`, and `userId` query parameters.
+- Tags are trimmed, normalized to lowercase, deduplicated, and limited to 10 per video.
+
+### Discovery scoring
+
+- Trending score: `views + (likes * 3) + (comments * 2) + 20` when the video was published within the last 7 days. Ties use newest-first ordering.
+- Recommendation score: `(same category * 4) + (matching tags * 3) + (same owner * 2) + (likes * 2) + (views * 0.5)`.
+- Recommendations first consider videos sharing a category, tag, or owner; when there are not enough matches, remaining slots fall back to popular published videos sorted by views, likes, then newest-first.
 
 ### Comments
 
@@ -162,6 +175,13 @@ Refresh tokens are stored in an HTTP-only cookie and in the user record so they 
 - Users cannot subscribe to themselves.
 - Subscription pairs and likes are protected by unique indexes.
 - Deleting a video also removes related comments, likes, playlist references, and watch-history references.
+
+## Rate limiting
+
+- Authentication routes (registration, login, and refresh token): 5 requests per IP per 15 minutes.
+- Video publishing: 10 requests per authenticated user (or IP when unauthenticated) per hour.
+- Like, comment mutation, and subscription mutation routes: 60 requests per IP per minute.
+- Rate-limited responses use status `429` and standard rate-limit response headers.
 
 ## Responses
 
