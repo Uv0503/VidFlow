@@ -1,9 +1,18 @@
 import api, { unwrap } from "./api";
 
-export const listVideos = async (query = "") =>
-  unwrap(await api.get("/videos", { params: { query: query || undefined, limit: 24 } }));
+export const listVideos = async (query = "", filters = {}) =>
+  unwrap(await api.get("/videos", { params: {
+    query: query || undefined,
+    category: filters.category || undefined,
+    tag: filters.tag || undefined,
+    limit: 24,
+  } }));
 
 export const getVideoById = async (id) => unwrap(await api.get(`/videos/${id}`));
+export const getTrendingVideos = async (params = {}) =>
+  unwrap(await api.get("/videos/trending", { params: { limit: 24, ...params } }));
+export const getRecommendedVideos = async (videoId, limit = 10) =>
+  unwrap(await api.get(`/videos/${videoId}/recommendations`, { params: { limit } }));
 export const uploadVideo = async (form, onUploadProgress) =>
   unwrap(await api.post("/videos/publish-video", form, {
     timeout: 10 * 60 * 1000,

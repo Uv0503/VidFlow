@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { uploadVideo } from "../services/video";
 import { Button, ErrorMessage, Input, Textarea } from "../components/ui";
+import { VIDEO_CATEGORIES } from "../constants/video";
 
 export default function Upload() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("General");
+  const [tags, setTags] = useState("");
   const [videoFile, setVideoFile] = useState(null);
   const [thumbnail, setThumbnail] = useState(null);
   const [preview, setPreview] = useState("");
@@ -35,6 +38,8 @@ export default function Upload() {
     const form = new FormData();
     form.append("title", title.trim());
     form.append("description", description.trim());
+    form.append("category", category);
+    form.append("tags", tags);
     form.append("videoFile", videoFile);
     form.append("thumbnail", thumbnail);
     try {
@@ -61,6 +66,13 @@ export default function Upload() {
         <div className="panel grid gap-5 p-6">
           <Input label="Title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Give your video a clear title" />
           <Textarea label="Description" value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Tell viewers what this video is about" />
+          <label className="grid gap-2 text-sm font-medium text-zinc-300">Category
+            <select value={category} onChange={(event) => setCategory(event.target.value)} className="w-full rounded-xl border border-white/10 bg-zinc-950/70 px-4 py-3 text-white outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-500/20">
+              {VIDEO_CATEGORIES.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          <Input label="Tags" value={tags} onChange={(event) => setTags(event.target.value)} />
+          <p className="-mt-3 text-xs text-zinc-500">Separate up to 10 tags with commas.</p>
           <label className="grid cursor-pointer place-items-center rounded-2xl border border-dashed border-violet-400/30 bg-violet-500/5 px-6 py-10 text-center hover:bg-violet-500/10">
             <span className="font-semibold">{videoFile ? videoFile.name : "Choose a video file"}</span>
             {videoFile && <span className="mt-1 text-sm text-violet-300">{fileSizeMb.toFixed(1)} MB selected</span>}

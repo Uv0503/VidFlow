@@ -16,6 +16,35 @@ import { assertObjectId, isOwner } from "../utils/objectId.js";
 
 const ownerFields = "username fullName avatar";
 
+export const VIDEO_CATEGORIES = [
+  "General", "Education", "Technology", "Gaming", "Music", "Entertainment",
+  "Sports", "News", "Howto & Style", "Travel",
+];
+
+const normalizeCategory = (value) => {
+  if (typeof value !== "string" || !value.trim()) {
+    throw new ApiError(400, "Category must be one of the supported categories");
+  }
+  const category = VIDEO_CATEGORIES.find((item) => item.toLowerCase() === value.trim().toLowerCase());
+  if (!category) throw new ApiError(400, "Category must be one of the supported categories");
+  return category;
+};
+
+const normalizeTags = (value) => {
+  const values = Array.isArray(value) ? value : [value];
+  const tags = [...new Set(values.flatMap((item) => String(item ?? "").split(","))
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean))];
+  if (tags.length > 10) throw new ApiError(400, "A video can have at most 10 tags");
+  return tags;
+};
+
+const parsePagination = (query, defaultLimit = 12, maxLimit = 50) => {
+  const page = Math.max(Number.parseInt(query.page, 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(query.limit, 10) || defaultLimit, 1), maxLimit);
+  return { page, limit };
+};
+
 const ensureVideoOwner = async (videoId, userId) => {
   assertObjectId(videoId, "video id");
   const video = await Video.findById(videoId);
@@ -25,20 +54,33 @@ const ensureVideoOwner = async (videoId, userId) => {
 };
 
 const listVideos = async (req, res, ownerId) => {
-  const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 12, 1), 50);
+  const { page, limit } = parsePagination(req.query);
   const sortBy = ["createdAt", "views", "title", "duration"].includes(req.query.sortBy)
     ? req.query.sortBy
     : "createdAt";
   const sortType = req.query.sortType === "asc" ? 1 : -1;
   const filter = { isPublished: true };
+
+  const conditions = [];
+  if (req.query.category !== undefined) {
+    const category = normalizeCategory(req.query.category);
+    conditions.push({ $or: category === "General"
+      ? [{ category }, { category: { $exists: false } }]
+      : [{ category }] });
+  }
+  if (req.query.tag?.trim()) {
+    filter.tags = req.query.tag.trim().toLowerCase();
+  }
   if (req.query.query?.trim()) {
     const pattern = req.query.query.trim();
-    filter.$or = [
+    conditions.push({ $or: [
       { title: { $regex: pattern, $options: "i" } },
       { description: { $regex: pattern, $options: "i" } },
-    ];
+      { tags: { $regex: pattern, $options: "i" } },
+      { category: { $regex: pattern, $options: "i" } },
+    ] });
   }
+  if (conditions.length) filter.$and = conditions;
   const requestedOwner = ownerId || req.query.userId;
   if (requestedOwner) {
     assertObjectId(requestedOwner, "user id");
@@ -130,6 +172,8 @@ export const publishVideo = asyncHandler(async (req, res) => {
       username: req.user.username,
       videoFile: videoUpload.secure_url,
       thumbnail: thumbnailUpload.secure_url,
+      category: req.body.category === undefined ? "General" : normalizeCategory(req.body.category),
+      tags: req.body.tags === undefined ? [] : normalizeTags(req.body.tags),
       isPublished: true,
     });
     await video.populate("owner", ownerFields);
@@ -201,11 +245,15 @@ export const updateVideo = asyncHandler(async (req, res) => {
   const video = await ensureVideoOwner(req.params.videoId, req.user._id);
   const title = req.body.title?.trim();
   const description = req.body.description?.trim();
-  if (!title && !description && !req.file?.path) {
-    throw new ApiError(400, "Provide a title, description, or thumbnail");
+  const hasCategory = Object.prototype.hasOwnProperty.call(req.body, "category");
+  const hasTags = Object.prototype.hasOwnProperty.call(req.body, "tags");
+  if (!title && !description && !req.file?.path && !hasCategory && !hasTags) {
+    throw new ApiError(400, "Provide a title, description, thumbnail, category, or tags");
   }
   if (title) video.title = title;
   if (description) video.description = description;
+  if (hasCategory) video.category = normalizeCategory(req.body.category);
+  if (hasTags) video.tags = normalizeTags(req.body.tags);
   if (req.file?.path) {
     const uploaded = await uploadOnCloudinary(req.file.path, "image");
     const oldPublicId = extractPublicId(video.thumbnail);
@@ -240,4 +288,112 @@ export const toggleIsPublished = asyncHandler(async (req, res) => {
   video.isPublished = !video.isPublished;
   await video.save();
   res.status(200).json(new ApiResponse(200, video, "Publish status updated"));
+});
+
+
+const engagementStages = () => [
+  { $lookup: { from: "likes", let: { videoId: "$_id" }, pipeline: [
+    { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+    { $count: "count" },
+  ], as: "likeStats" } },
+  { $lookup: { from: "comments", let: { videoId: "$_id" }, pipeline: [
+    { $match: { $expr: { $eq: ["$video", "$$videoId"] } } },
+    { $count: "count" },
+  ], as: "commentStats" } },
+  { $addFields: {
+    likesCount: { $ifNull: [{ $arrayElemAt: ["$likeStats.count", 0] }, 0] },
+    commentsCount: { $ifNull: [{ $arrayElemAt: ["$commentStats.count", 0] }, 0] },
+    category: { $ifNull: ["$category", "General"] },
+  } },
+  { $lookup: { from: "users", let: { ownerId: "$owner" }, pipeline: [
+    { $match: { $expr: { $eq: ["$_id", "$$ownerId"] } } },
+    { $project: { username: 1, fullName: 1, avatar: 1 } },
+  ], as: "owner" } },
+  { $unwind: "$owner" },
+  { $project: { likeStats: 0, commentStats: 0, viewedBy: 0 } },
+];
+
+export const getTrendingVideos = asyncHandler(async (req, res) => {
+  const { page, limit } = parsePagination(req.query);
+  const recentThreshold = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const pipeline = [
+    { $match: { isPublished: true } },
+    ...engagementStages(),
+    { $addFields: { trendingScore: { $add: [
+      { $ifNull: ["$views", 0] },
+      { $multiply: ["$likesCount", 3] },
+      { $multiply: ["$commentsCount", 2] },
+      { $cond: [{ $gte: ["$createdAt", recentThreshold] }, 20, 0] },
+    ] } } },
+    { $sort: { trendingScore: -1, createdAt: -1 } },
+    { $skip: (page - 1) * limit },
+    { $limit: limit },
+  ];
+  const [videos, totalVideos] = await Promise.all([
+    Video.aggregate(pipeline),
+    Video.countDocuments({ isPublished: true }),
+  ]);
+  res.status(200).json(new ApiResponse(200, {
+    videos,
+    page,
+    limit,
+    totalDocs: totalVideos,
+    totalVideos,
+    totalPages: Math.ceil(totalVideos / limit),
+  }, "Trending videos fetched"));
+});
+
+const recommendationPipeline = (match, currentVideo) => [
+  { $match: match },
+  ...engagementStages(),
+  { $addFields: {
+    matchingTagsCount: { $size: { $setIntersection: [{ $ifNull: ["$tags", []] }, currentVideo.tags || []] } },
+    sameCategory: { $cond: [{ $eq: ["$category", currentVideo.category || "General"] }, 1, 0] },
+    sameOwner: { $cond: [{ $eq: ["$owner._id", currentVideo.owner] }, 1, 0] },
+  } },
+  { $addFields: { recommendationScore: { $add: [
+    { $multiply: ["$sameCategory", 4] },
+    { $multiply: ["$matchingTagsCount", 3] },
+    { $multiply: ["$sameOwner", 2] },
+    { $multiply: ["$likesCount", 2] },
+    { $multiply: [{ $ifNull: ["$views", 0] }, 0.5] },
+  ] } } },
+  { $sort: { recommendationScore: -1, createdAt: -1 } },
+];
+
+export const getRecommendedVideos = asyncHandler(async (req, res) => {
+  assertObjectId(req.params.videoId, "video id");
+  const limit = Math.min(Math.max(Number.parseInt(req.query.limit, 10) || 10, 1), 20);
+  const currentVideo = await Video.findById(req.params.videoId).select("category tags owner isPublished");
+  if (!currentVideo || !currentVideo.isPublished) throw new ApiError(404, "Video not found");
+
+  const currentCategory = currentVideo.category || "General";
+  const similarityMatch = {
+    _id: { $ne: currentVideo._id },
+    isPublished: true,
+    $or: [
+      { category: currentCategory },
+      ...(currentCategory === "General" ? [{ category: { $exists: false } }] : []),
+      { tags: { $in: currentVideo.tags || [] } },
+      { owner: currentVideo.owner },
+    ],
+  };
+  const matchingVideos = await Video.aggregate([
+    ...recommendationPipeline(similarityMatch, currentVideo),
+    { $limit: limit },
+  ]);
+  if (matchingVideos.length >= limit) {
+    return res.status(200).json(new ApiResponse(200, matchingVideos, "Recommended videos fetched"));
+  }
+
+  const remaining = limit - matchingVideos.length;
+  const fallbackVideos = await Video.aggregate([
+    ...recommendationPipeline({
+      _id: { $nin: [currentVideo._id, ...matchingVideos.map((video) => video._id)] },
+      isPublished: true,
+    }, currentVideo),
+    { $sort: { views: -1, likesCount: -1, createdAt: -1 } },
+    { $limit: remaining },
+  ]);
+  res.status(200).json(new ApiResponse(200, [...matchingVideos, ...fallbackVideos], "Recommended videos fetched"));
 });

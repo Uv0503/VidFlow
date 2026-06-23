@@ -4,6 +4,7 @@ import {
   addComment,
   deleteComment,
   getComments,
+  getRecommendedVideos,
   getVideoById,
   toggleLikeVideo,
   toggleSubscription,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from "../services/auth";
 import { Button, EmptyState, ErrorMessage, Input, Loader } from "../components/ui";
 import { addVideoToPlaylist, getMyPlaylists } from "../services/social";
+import VideoGrid from "../components/VideoGrid";
 
 const sameId = (a, b) => a?.toString() === b?.toString();
 
@@ -21,6 +23,7 @@ export default function Watch() {
   const { user } = useAuth();
   const [video, setVideo] = useState(null);
   const [comments, setComments] = useState([]);
+  const [recommendations, setRecommendations] = useState([]);
   const [text, setText] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
@@ -36,12 +39,14 @@ export default function Watch() {
     setLoading(true);
     setError("");
     try {
-      const [videoData, commentData] = await Promise.all([
+      const [videoData, commentData, recommendationData] = await Promise.all([
         getVideoById(videoId),
         getComments(videoId),
+        getRecommendedVideos(videoId),
       ]);
       setVideo(videoData);
       setComments(commentData || []);
+      setRecommendations(recommendationData || []);
     } catch (err) {
       setError(err.userMessage);
     } finally {
@@ -223,8 +228,18 @@ export default function Watch() {
       )}
       <div className="panel mt-5 p-5">
         <p className="text-sm font-semibold text-zinc-300">{video.views?.toLocaleString()} views</p>
+        {video.category && <p className="mt-3 text-sm font-semibold text-violet-300">{video.category}</p>}
+        {video.tags?.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{video.tags.map((tag) => <span key={tag} className="rounded-full bg-violet-500/10 px-2.5 py-1 text-xs font-medium text-violet-200">#{tag}</span>)}</div>}
         <p className="mt-3 whitespace-pre-wrap text-zinc-400">{video.description}</p>
       </div>
+
+      {recommendations.length > 0 && (
+        <section className="mt-8 border-t border-white/10 pt-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-400">Keep watching</p>
+          <h2 className="mt-1 text-xl font-bold">Recommended videos</h2>
+          <div className="mt-5"><VideoGrid items={recommendations} /></div>
+        </section>
+      )}
 
       <section className="mt-8">
         <h2 className="text-xl font-bold">{comments.length} Comments</h2>

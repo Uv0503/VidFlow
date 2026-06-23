@@ -5,11 +5,13 @@ import {loginUser, logoutUser, registerUser,refreshAccessToken,changeCurrentPass
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { optionalJWT, verifyJWT } from "../middlewares/auth.middleware.js";
+import { authLimiter } from "../middlewares/rateLimiter.middleware.js";
 
 
 const router= Router();
 
 router.route("/register").post(
+    authLimiter,
     upload.fields([
         {
             name:"avatar",
@@ -22,11 +24,11 @@ router.route("/register").post(
     ])
     ,registerUser)
 
-router.route("/login").post(upload.none(), loginUser)
+router.route("/login").post(authLimiter, upload.none(), loginUser)
 
 //secured routes
 router.route("/logout").post(verifyJWT,logoutUser)
-router.route("/refresh-token").post(refreshAccessToken)
+router.route("/refresh-token").post(authLimiter, refreshAccessToken)
 router.route("/change-current-password").post(verifyJWT,changeCurrentPassword)
 router.route("/current-user").get(verifyJWT,getCurrentUser)
 router.route("/update-account-details").patch(verifyJWT,updateAccountDetails)

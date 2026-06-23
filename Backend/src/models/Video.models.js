@@ -45,13 +45,31 @@ const videoSchema= new mongoose.Schema({
         type:String,
         required:true
     },
+    category: {
+        type: String,
+        trim: true,
+        default: "General",
+        enum: {
+            values: ["General", "Education", "Technology", "Gaming", "Music", "Entertainment", "Sports", "News", "Howto & Style", "Travel"],
+            message: "Category must be one of the supported categories"
+        },
+        index: true
+    },
+    tags: {
+        type: [String],
+        default: [],
+        set: (tags) => tags.map((tag) => tag.trim().toLowerCase())
+    },
     isPublished:{
         type:Boolean,
-        default:true
+        default:true,
+        index: true
     }
 },{timestamps:true})
 
 videoSchema.plugin(mongooseAggregatePaginate)//this lets to use aggregate queries now by plugging in like app.use
+videoSchema.index({ tags: 1 });
+videoSchema.index({ isPublished: 1, createdAt: -1 });
 
 
 

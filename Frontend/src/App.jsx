@@ -11,6 +11,7 @@ import Subscriptions from "./pages/Subscriptions";
 import Tweets from "./pages/Tweets";
 import Playlists from "./pages/Playlists";
 import History from "./pages/History";
+import Trending from "./pages/Trending";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -25,6 +26,7 @@ export default function App() {
         <main className="mx-auto min-h-[calc(100vh-64px)] max-w-[1800px] px-4 pb-24 pt-6 md:ml-20 md:px-8 md:pb-10 lg:ml-60">
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/trending" element={<Trending />} />
             <Route path="/watch/:videoId" element={<Watch />} />
             <Route path="/c/:username" element={<Channel />} />
             <Route path="/login" element={<Login />} />

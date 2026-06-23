@@ -29,9 +29,12 @@ const uploadOnCloudinary = async (localFilePath, resourceType = "auto") => {
       if (size < 20 * 1024 * 1024) {
         return await cloudinary.uploader.upload(localFilePath, options);
       }
-      return await cloudinary.uploader.upload_large(localFilePath, {
-        ...options,
-        chunk_size: 6 * 1024 * 1024,
+      return await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_large(
+          localFilePath,
+          { ...options, chunk_size: 6 * 1024 * 1024 },
+          (error, result) => error ? reject(error) : resolve(result)
+        );
       });
     }
 
