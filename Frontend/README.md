@@ -1,5 +1,5 @@
 
-# VideoTube Frontend
+# VidFlow Frontend
 
 See the root `README.md` for complete setup instructions and the current API contract.
 

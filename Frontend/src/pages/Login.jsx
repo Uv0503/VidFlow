@@ -32,7 +32,7 @@ export default function Login() {
     <div className="grid min-h-[75vh] place-items-center">
       <form onSubmit={submit} className="panel w-full max-w-md p-7 shadow-2xl shadow-violet-950/20">
         <p className="text-sm font-semibold text-violet-400">Welcome back</p>
-        <h1 className="mt-1 text-3xl font-bold">Sign in to VideoTube</h1>
+        <h1 className="mt-1 text-3xl font-bold">Sign in to VidFlow</h1>
         <p className="mt-2 text-sm text-zinc-500">Continue watching, commenting, and creating.</p>
         <div className="mt-7 grid gap-4">
           <Input label="Username or email" value={identifier} onChange={(event) => setIdentifier(event.target.value)} autoComplete="username" />

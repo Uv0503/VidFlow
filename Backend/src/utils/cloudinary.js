@@ -21,7 +21,7 @@ const uploadOnCloudinary = async (localFilePath, resourceType = "auto") => {
   try {
     const options = {
       resource_type: resourceType,
-      folder: resourceType === "video" ? "videotube/videos" : "videotube/images",
+      folder: resourceType === "video" ? "vidflow/videos" : "vidflow/images",
     };
 
     if (resourceType === "video") {

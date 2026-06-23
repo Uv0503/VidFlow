@@ -20,7 +20,7 @@ export default function Navbar() {
       <div className="flex h-full items-center gap-3 px-4 md:px-6">
         <Link to="/" className="flex min-w-fit items-center gap-2 text-lg font-black tracking-tight">
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 shadow-lg shadow-violet-500/20">V</span>
-          <span className="hidden sm:block">VideoTube</span>
+          <span className="hidden sm:block">VidFlow</span>
         </Link>
         <form onSubmit={search} className="mx-auto flex w-full max-w-2xl items-center">
           <input

@@ -1,6 +1,6 @@
-# VideoTube Backend
+# VidFlow Backend
 
-Express and MongoDB API for the VideoTube application.
+Express and MongoDB API for the VidFlow application.
 
 ## Technology
 
