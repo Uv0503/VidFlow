@@ -59,4 +59,5 @@ Successful responses use `{ success, statusCode, data, message }`. Errors use `{
 - Authentication supports both HTTP-only cookies and `Authorization: Bearer <accessToken>`.
 - Local cookies are non-secure with `SameSite=Lax`; production cookies are secure.
 - Video uploads accept MP4, WebM, or MOV and are limited to 100 MB by the current Multer configuration.
+- Video categories are validated as one of: General, Education, Technology, Gaming, Music, Entertainment, Sports, News, Howto & Style, or Travel.
 - Existing databases created with the old Like schema may require the old indexes to be dropped before Mongoose creates the new partial unique indexes.

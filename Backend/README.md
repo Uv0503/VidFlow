@@ -94,6 +94,8 @@ All routes begin with:
 - `PATCH /videos/:videoId/publish`
 - `DELETE /videos/:videoId`
 
+Video categories are validated as one of: General, Education, Technology, Gaming, Music, Entertainment, Sports, News, Howto & Style, or Travel.
+
 ### Comments
 
 - `GET /comments/:videoId`
