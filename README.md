@@ -1,4 +1,4 @@
-# VideoTube
+# VidFlow
 
 A full-stack video sharing platform built with React, Node.js, Express, MongoDB, JWT authentication, Cloudinary uploads, likes, comments, playlists, subscriptions, and a modern responsive UI.
 
